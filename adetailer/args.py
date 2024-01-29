@@ -47,10 +47,10 @@ class ArgsList(UserList):
 
 class ADetailerArgs(BaseModel, extra=Extra.forbid):
     ad_model: str = "None"
+    ad_classes: str = "None"
     ad_prompt: str = ""
     ad_negative_prompt: str = ""
     ad_confidence: confloat(ge=0.0, le=1.0) = 0.3
-    ad_classes: int = 0
     ad_mask_k_largest: NonNegativeInt = 0
     ad_mask_min_ratio: confloat(ge=0.0, le=1.0) = 0.0
     ad_mask_max_ratio: confloat(ge=0.0, le=1.0) = 1.0
@@ -189,10 +189,10 @@ class ADetailerArgs(BaseModel, extra=Extra.forbid):
 
 _all_args = [
     ("ad_model", "ADetailer model"),
+    ("ad_classes", "ADetailer class filter"),
     ("ad_prompt", "ADetailer prompt"),
     ("ad_negative_prompt", "ADetailer negative prompt"),
     ("ad_confidence", "ADetailer confidence"),
-    ("ad_classes", "ADetailer class filter"),
     ("ad_mask_k_largest", "ADetailer mask only top k largest"),
     ("ad_mask_min_ratio", "ADetailer mask min ratio"),
     ("ad_mask_max_ratio", "ADetailer mask max ratio"),

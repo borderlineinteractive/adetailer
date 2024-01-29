@@ -14,15 +14,19 @@ def ultralytics_predict(
     model_path: str | Path,
     image: Image.Image,
     confidence: float = 0.3,
-    classes: int = 0,
+    classes: str = "None",
     device: str = "",
 ) -> PredictOutput:
     from ultralytics import YOLO
-
     model = YOLO(model_path)
+    names = model.names
+    if(classes=="None"):
+        classes_index=0
+    else:
+        classes_index=list(names.keys())[list(names.values()).index(classes)]
     pred = model(image, conf=confidence, device=device)
 
-    bboxes = pred[0].boxes[pred[0].boxes.cls == classes].xyxy.cpu().numpy()
+    bboxes = pred[0].boxes[pred[0].boxes.cls == classes_index].xyxy.cpu().numpy()
     if bboxes.size == 0:
         return PredictOutput()
     bboxes = bboxes.tolist()

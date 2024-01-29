@@ -5,11 +5,24 @@ from functools import partial
 from types import SimpleNamespace
 from typing import Any
 
+from pathlib import Path
+
 import gradio as gr
+import torch
 
 from adetailer import AFTER_DETAILER, __version__
 from adetailer.args import ALL_ARGS, MASK_MERGE_INVERT
 from controlnet_ext import controlnet_exists, get_cn_models
+from modules import paths, safe
+from contextlib import contextmanager
+
+import cv2
+from PIL import Image
+from torchvision.transforms.functional import to_pil_image
+
+from adetailer import PredictOutput
+from adetailer.common import create_mask_from_bbox
+from ultralytics import YOLO
 
 cn_module_choices = {
     "inpaint": [
@@ -29,6 +42,8 @@ cn_module_choices = {
     "depth": ["depth_midas", "depth_hand_refiner"],
 }
 
+class_list = ["None"]
+
 
 class Widgets(SimpleNamespace):
     def tolist(self):
@@ -43,6 +58,15 @@ class WebuiInfo:
     i2i_button: gr.Button
     checkpoints_list: list[str]
     vae_list: list[str]
+    
+@contextmanager
+def change_torch_load():
+    orig = torch.load
+    try:
+        torch.load = safe.unsafe_torch_load
+        yield
+    finally:
+        torch.load = orig
 
 
 def gr_interactive(value: bool = True):
@@ -80,6 +104,17 @@ def on_cn_model_update(cn_model_name: str):
             choices = cn_module_choices[t]
             return gr.update(visible=True, choices=choices, value=choices[0])
     return gr.update(visible=False, choices=["None"], value="None")
+    
+    
+def update_class_names(ad_model: str):
+    adetailer_dir = Path(paths.models_path, "adetailer")
+    with change_torch_load():
+        if(ad_model !="None"):
+            model = YOLO(Path(adetailer_dir, ad_model))
+            class_list = list(model.names.values())
+        else:
+            class_list = ["None"]
+        return gr.update(visible=True, choices=class_list, value=class_list[0])
 
 
 def elem_id(item_id: str, n: int, is_img2img: bool) -> str:
@@ -164,6 +199,20 @@ def one_ui_group(n: int, is_img2img: bool, webui_info: WebuiInfo):
             type="value",
             elem_id=eid("ad_model"),
         )
+        w.ad_classes = gr.Dropdown(
+            label="Class to detect" + suffix(n),
+            choices=class_list,
+            value=class_list[0],
+            visible=True,
+            type="value",
+            elem_id=eid("ad_classes"),
+        )
+        w.ad_model.change(
+            update_class_names,
+            inputs=w.ad_model,
+            outputs=w.ad_classes,
+            queue=False,
+        )
 
     with gr.Group():
         with gr.Row(elem_id=eid("ad_toprow_prompt")):
@@ -240,15 +289,6 @@ def detection(w: Widgets, n: int, is_img2img: bool):
                 value=0.3,
                 visible=True,
                 elem_id=eid("ad_confidence"),
-            )
-            w.ad_classes = gr.Slider(
-                label="Class to detect" + suffix(n),
-                minimum=0,
-                maximum=600,
-                step=1,
-                value=0,
-                visible=True,
-                elem_id=eid("ad_classes"),
             )
             w.ad_mask_k_largest = gr.Slider(
                 label="Mask only the top k largest (0 to disable)" + suffix(n),
