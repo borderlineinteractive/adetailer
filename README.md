@@ -4,6 +4,8 @@ ADetailer is a extension for stable diffusion webui, similar to Detection Detail
 
 This fork adds support for yolo8 models that include multiple class names, such as the original yolo8 models from ultralytics. A particular advantage of such models is that they can be trained to distinguish very similar objects.
 
+![image](https://github.com/borderlineinteractive/adetailer/blob/main/adetailer.JPG)
+
 ## Install
 
 (from Mikubill/sd-webui-controlnet)
