@@ -1,6 +1,8 @@
-# ADetailer
+# ADetailer - Fork with class name selection.
 
 ADetailer is a extension for stable diffusion webui, similar to Detection Detailer, except it uses ultralytics instead of the mmdet.
+
+This fork adds support for yolo8 models that include multiple class names, such as the original yolo8 models from ultralytics. A particular advantage of such models is that they can be trained to distinguish very similar objects.
 
 ## Install
 
